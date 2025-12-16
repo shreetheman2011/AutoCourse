@@ -107,7 +107,7 @@ export default function PDFUpload({ onUploaded }: PDFUploadProps) {
             </div>
             <div>
               <p className="text-lg font-medium text-gray-700">
-                Click to upload or drag and drop
+                Click to upload(NOTE: THESE PDFS AND STUDY TOOLS WILL NOT SUSTAIN THROUGHOUT THE SESSION. ON EVERY RELOAD THEY WILL GO AWAY. Our team is working on fixing this.)
               </p>
               <p className="text-sm text-gray-500 mt-1">PDF files only</p>
             </div>
