@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, CheckCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
 
 interface MatchingPair {
   term: string;
@@ -15,15 +17,33 @@ interface MatchingProps {
     count: number;
     topics: string;
   };
+  docId?: string;
+  initialData?: { pairs: MatchingPair[] };
+  onGenerate?: () => void;
 }
 
 export default function Matching({
   uploadedContent,
   customization,
+  docId,
+  initialData,
+  onGenerate,
 }: MatchingProps) {
-  const [pairs, setPairs] = useState<MatchingPair[]>([]);
+  const { user } = useAuth();
+  const [pairs, setPairs] = useState<MatchingPair[]>(initialData?.pairs || []);
   const [shuffledTerms, setShuffledTerms] = useState<string[]>([]);
   const [shuffledDefinitions, setShuffledDefinitions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (initialData?.pairs) {
+      const terms = initialData.pairs.map((p) => p.term);
+      const definitions = initialData.pairs.map((p) => p.definition);
+      setShuffledTerms(shuffleArray([...terms]));
+      setShuffledDefinitions(shuffleArray([...definitions]));
+      setGameStarted(true);
+    }
+  }, [initialData]);
+
   const [selectedTerm, setSelectedTerm] = useState<string | null>(null);
   const [selectedDefinition, setSelectedDefinition] = useState<string | null>(
     null
@@ -51,6 +71,17 @@ export default function Matching({
       const data = await response.json();
       setPairs(data.pairs);
 
+      // Save to Supabase
+      if (docId && user) {
+        await supabase.from("study_tools").insert({
+          document_id: docId,
+          user_id: user.id,
+          type: "matching",
+          title: `Matching Game (${new Date().toLocaleDateString()})`,
+          data: { pairs: data.pairs },
+        });
+      }
+
       // Shuffle terms and definitions
       const terms = data.pairs.map((p: MatchingPair) => p.term);
       const definitions = data.pairs.map((p: MatchingPair) => p.definition);
@@ -61,10 +92,12 @@ export default function Matching({
       setSelectedTerm(null);
       setSelectedDefinition(null);
       setGameStarted(true);
+      
+      if (onGenerate) onGenerate();
     } catch (error) {
       console.error("Error:", error);
       alert(
-        "Failed to generate matching exercise. Make sure your Gemini API key is set."
+        "Failed to generate matching exercise."
       );
     } finally {
       setIsGenerating(false);
@@ -80,11 +113,7 @@ export default function Matching({
     return shuffled;
   };
 
-  useEffect(() => {
-    if (uploadedContent && pairs.length === 0) {
-      // Auto-generate on content load
-    }
-  }, [uploadedContent]);
+  // Removed auto-generation useEffect to prevent loops.
 
   const handleTermClick = (term: string) => {
     if (matches.has(term)) return; // Already matched

@@ -1,28 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const openai = new OpenAI({
+  apiKey: process.env.CHATGPT_SECRET_KEY || "",
+});
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/56b95b3c-eb0c-44fe-a59a-a8ce431c86b1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-quiz/route.ts:7',message:'POST handler entry',data:{hasReq:true},timestamp:Date.now(),sessionId:'debug-session',runId:'quiz-run2',hypothesisId:'Q1,Q2,Q3,Q4'})}).catch(()=>{});
-    // #endregion
-
     const { content, count, difficulty, topics } = await req.json();
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/56b95b3c-eb0c-44fe-a59a-a8ce431c86b1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-quiz/route.ts:13',message:'Inputs received',data:{hasContent:!!content,count, difficulty, topics},timestamp:Date.now(),sessionId:'debug-session',runId:'quiz-run2',hypothesisId:'Q2,Q3'})}).catch(()=>{});
-    // #endregion
-
-    if (!process.env.GEMINI_API_KEY) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/56b95b3c-eb0c-44fe-a59a-a8ce431c86b1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-quiz/route.ts:20',message:'Missing GEMINI_API_KEY',data:{envPresent:false},timestamp:Date.now(),sessionId:'debug-session',runId:'quiz-run2',hypothesisId:'Q1'})}).catch(()=>{});
-      // #endregion
+    if (!process.env.CHATGPT_SECRET_KEY) {
       return NextResponse.json(
-        { error: "Gemini API key not configured" },
+        { error: "OpenAI API key (CHATGPT_SECRET_KEY) not configured" },
         { status: 500 }
       );
     }
@@ -53,43 +44,23 @@ Make sure:
 - All questions have exactly 4 options
 - Questions are appropriate for ${difficulty} level
 - Include helpful explanations
+- Return ONLY valid JSON, no additional text.`;
 
-Return ONLY valid JSON, no additional text.`;
-
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-      },
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a helpful assistant that outputs JSON." },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      response_format: { type: "json_object" },
     });
 
-    const response = await result.response;
-    const responseText = response.text();
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/56b95b3c-eb0c-44fe-a59a-a8ce431c86b1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-quiz/route.ts:58',message:'Model responded',data:{responseLength:responseText?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'quiz-run2',hypothesisId:'Q2,Q3'})}).catch(()=>{});
-    // #endregion
-
-    // Try to extract JSON from the response (in case there's markdown formatting)
-    let jsonText = responseText.trim();
-    const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      jsonText = jsonMatch[0];
-    }
-
-    const parsed = JSON.parse(jsonText);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/56b95b3c-eb0c-44fe-a59a-a8ce431c86b1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-quiz/route.ts:71',message:'JSON parsed',data:{questionsCount:parsed?.questions?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'quiz-run2',hypothesisId:'Q2,Q3'})}).catch(()=>{});
-    // #endregion
+    const responseText = completion.choices[0].message.content || "{}";
+    const parsed = JSON.parse(responseText);
 
     return NextResponse.json({ questions: parsed.questions || [] });
   } catch (error: any) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/56b95b3c-eb0c-44fe-a59a-a8ce431c86b1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-quiz/route.ts:78',message:'Error caught',data:{errorName:error?.name,errorMessage:error?.message,errorStack:error?.stack?.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'quiz-run2',hypothesisId:'Q1,Q2,Q3,Q4'})}).catch(()=>{});
-    // #endregion
-
     console.error("Quiz generation error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to generate quiz" },
@@ -97,3 +68,4 @@ Return ONLY valid JSON, no additional text.`;
     );
   }
 }
+

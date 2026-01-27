@@ -1,31 +1,34 @@
-export default function Logo({ size = 'large' }: { size?: 'small' | 'large' }) {
-  const sizeClasses = {
-    large: 'text-6xl md:text-7xl',
-    small: 'text-2xl md:text-3xl',
-  }
+import Image from "next/image";
+
+export default function Logo({ size = "large" }: { size?: "small" | "large" }) {
+  const height = size === "large" ? 50 : 32;
+  const width = size === "large" ? 50 : 32;
+  const textSize = size === "large" ? "text-4xl" : "text-2xl";
 
   return (
-    <div className="flex items-center justify-center">
-      <h1
-        className={`${sizeClasses[size]} font-black tracking-tight`}
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: '-0.02em',
-          textShadow: '0 0 30px rgba(102, 126, 234, 0.3)',
-        }}
-      >
-        <span className="font-extrabold" style={{ fontFamily: 'Georgia, serif' }}>
-          auto
-        </span>
-        <span className="font-black" style={{ fontFamily: 'Arial, sans-serif' }}>
-          course
-        </span>
+    <div className="flex items-center gap-3">
+      <div className="relative">
+         {/* Fallback to emoji if image fails, but assume image exists as per user */}
+         <div className="relative z-10">
+            <Image 
+               src="/images/logo.png" 
+               alt="Brain Logo" 
+               width={width} 
+               height={height}
+               className="object-contain"
+               onError={(e) => {
+                  // Fallback visual if needed currently hidden, 
+                  // but in a real app might toggle a state to show specific icon
+                  e.currentTarget.style.display = 'none';
+               }}
+            />
+         </div>
+      </div>
+      <h1 className={`${textSize} font-bold text-gray-900 tracking-tight flex items-center`}>
+        <span className="text-blue-600">Auto</span>
+        <span className="text-gray-800">Course</span>
       </h1>
     </div>
-  )
+  );
 }
 

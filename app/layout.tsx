@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,7 +18,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <AuthProvider>
+          {/* Contact Banner */}
+          <div className="bg-primary-600 text-white text-center py-2 text-sm font-medium z-50">
+             Any questions or issues? Contact Shree Manickaraja
+          </div>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

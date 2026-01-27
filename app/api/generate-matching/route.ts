@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const openai = new OpenAI({
+  apiKey: process.env.CHATGPT_SECRET_KEY || "",
+});
 
 export async function POST(req: NextRequest) {
   try {
     const { content, count, difficulty, topics } = await req.json();
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.CHATGPT_SECRET_KEY) {
       return NextResponse.json(
-        { error: "Gemini API key not configured" },
+        { error: "OpenAI API key (CHATGPT_SECRET_KEY) not configured" },
         { status: 500 }
       );
     }
@@ -38,28 +40,20 @@ Make sure:
 - Definitions are clear and educational
 - Pairs are appropriate for ${difficulty} level
 - Each term has a unique, distinct definition
+- Return ONLY valid JSON, no additional text.`;
 
-Return ONLY valid JSON, no additional text.`;
-
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-      },
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a helpful assistant that outputs JSON." },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      response_format: { type: "json_object" },
     });
 
-    const response = await result.response;
-    const responseText = response.text();
-
-    // Try to extract JSON from the response (in case there's markdown formatting)
-    let jsonText = responseText.trim();
-    const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      jsonText = jsonMatch[0];
-    }
-
-    const parsed = JSON.parse(jsonText);
+    const responseText = completion.choices[0].message.content || "{}";
+    const parsed = JSON.parse(responseText);
 
     return NextResponse.json({ pairs: parsed.pairs || [] });
   } catch (error: any) {
@@ -70,3 +64,4 @@ Return ONLY valid JSON, no additional text.`;
     );
   }
 }
+

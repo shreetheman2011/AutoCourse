@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw, Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
 
 interface Flashcard {
   front: string;
@@ -15,13 +17,20 @@ interface FlashcardsProps {
     count: number;
     topics: string;
   };
+  docId?: string;
+  initialData?: { flashcards: Flashcard[] };
+  onGenerate?: () => void;
 }
 
 export default function Flashcards({
   uploadedContent,
   customization,
+  docId,
+  initialData,
+  onGenerate,
 }: FlashcardsProps) {
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const { user } = useAuth();
+  const [flashcards, setFlashcards] = useState<Flashcard[]>(initialData?.flashcards || []);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -44,29 +53,34 @@ export default function Flashcards({
 
       const data = await response.json();
       setFlashcards(data.flashcards);
+
+      // Save to Supabase
+      if (docId && user) {
+        await supabase.from("study_tools").insert({
+          document_id: docId,
+          user_id: user.id,
+          type: "flashcards",
+          title: `Flashcards (${new Date().toLocaleDateString()})`,
+          data: { flashcards: data.flashcards },
+        });
+      }
+
       setCurrentIndex(0);
       setIsFlipped(false);
+      
+      if (onGenerate) onGenerate();
     } catch (error) {
       console.error("Error:", error);
       alert(
-        "Failed to generate flashcards. Make sure your Gemini API key is set."
+        "Failed to generate flashcards."
       );
     } finally {
       setIsGenerating(false);
     }
   };
 
-  useEffect(() => {
-    if (uploadedContent) {
-      generateFlashcards();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    uploadedContent,
-    customization.count,
-    customization.difficulty,
-    customization.topics,
-  ]);
+  // Removed auto-generation useEffect to prevent loops.
+  // Generation is now handled by the parent StudyTools component.
 
   const nextCard = () => {
     setCurrentIndex((prev) => (prev + 1) % flashcards.length);

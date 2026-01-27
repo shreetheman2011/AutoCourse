@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, CheckCircle, XCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
 
 interface Question {
   question: string;
@@ -17,10 +19,14 @@ interface QuizProps {
     count: number;
     topics: string;
   };
+  docId?: string;
+  initialData?: { questions: Question[] };
+  onGenerate?: () => void;
 }
 
-export default function Quiz({ uploadedContent, customization }: QuizProps) {
-  const [questions, setQuestions] = useState<Question[]>([]);
+export default function Quiz({ uploadedContent, customization, docId, initialData, onGenerate }: QuizProps) {
+  const { user } = useAuth();
+  const [questions, setQuestions] = useState<Question[]>(initialData?.questions || []);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -46,24 +52,34 @@ export default function Quiz({ uploadedContent, customization }: QuizProps) {
 
       const data = await response.json();
       setQuestions(data.questions);
+      
+      // Save to Supabase
+      if (docId && user) {
+        await supabase.from("study_tools").insert({
+          document_id: docId,
+          user_id: user.id,
+          type: "quiz",
+          title: `Quiz (${new Date().toLocaleDateString()})`,
+          data: { questions: data.questions },
+        });
+      }
+
       setCurrentQuestion(0);
       setSelectedAnswer(null);
       setShowResult(false);
       setScore(0);
       setQuizStarted(true);
+      
+      if (onGenerate) onGenerate();
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to generate quiz. Make sure your Gemini API key is set.");
+      alert("Failed to generate quiz.");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  useEffect(() => {
-    if (uploadedContent && questions.length === 0) {
-      // Auto-generate on content load
-    }
-  }, [uploadedContent]);
+  // Removed auto-generation useEffect to prevent loops.
 
   const handleAnswerSelect = (index: number) => {
     if (showResult) return;

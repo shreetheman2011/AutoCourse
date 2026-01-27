@@ -1,0 +1,4 @@
+{
+  "/dashboard/[docId]/page": "app/dashboard/[docId]/page.js",
+  "/api/grade-frq/route": "app/api/grade-frq/route.js"
+}
