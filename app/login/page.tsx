@@ -27,11 +27,7 @@ export default function LoginPage() {
       if (error) throw error;
       router.push("/dashboard");
     } catch (error: any) {
-      if (error.message.includes("Email not confirmed")) {
-        setError("Email not verified. Check inbox and spam folders.");
-      } else {
-        setError(error.message);
-      }
+      setError(error.message);
     } finally {
       setLoading(false);
     }

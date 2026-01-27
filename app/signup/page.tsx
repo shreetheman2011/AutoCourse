@@ -21,6 +21,19 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    // Custom Auth Checks
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      setLoading(false);
+      return;
+    }
+
+    if (!email.includes("@") || !email.includes(".")) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -35,20 +48,16 @@ export default function SignupPage() {
 
       if (error) throw error;
       
-      // If we have a user but no session, it means email confirmation is required (or user exists)
-      if (data.user && !data.session) {
-        setSuccess("Account created! Please check your email to verify your account.");
-        setLoading(false);
-        return;
+      // With email verification disabled, we should have a session immediately
+      if (data.session) {
+        router.push("/dashboard");
+      } else if (data.user) {
+        // Fallback in case verification is still on but user was created
+        setSuccess("Account created successfully! Redirecting...");
+        setTimeout(() => router.push("/login"), 2000);
       }
-      
-      router.push("/dashboard");
     } catch (error: any) {
-      if (error.message.includes("Email not confirmed")) {
-        setError("Email not verified. Check inbox and spam folders.");
-      } else {
-        setError(error.message);
-      }
+      setError(error.message);
     } finally {
       if (!success) setLoading(false);
     }
@@ -64,20 +73,6 @@ export default function SignupPage() {
           Create Account
         </h2>
         
-        {/* School Email Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 flex gap-3 text-sm">
-           <div className="text-yellow-600 flex-shrink-0">
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-               <line x1="12" y1="9" x2="12" y2="13"/>
-               <line x1="12" y1="17" x2="12.01" y2="17"/>
-             </svg>
-           </div>
-           <p className="text-yellow-800">
-             <span className="font-bold">IMPORTANT:</span> Please use a personal email address (Gmail, Yahoo, etc.). School email addresses often block external emails, preventing you from verifying your account.
-           </p>
-        </div>
-
         {success && (
           <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 text-sm border border-green-200">
              <p className="font-bold flex items-center gap-2 mb-1">
