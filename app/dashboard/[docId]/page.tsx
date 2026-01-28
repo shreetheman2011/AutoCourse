@@ -54,14 +54,14 @@ export default function DocumentPage() {
       return;
     }
 
-    if (user && docId) {
-      fetchDocument();
+    if (user && docId && !document) {
+      fetchDocument(true);
     }
-  }, [docId, user, authLoading, router]);
+  }, [docId, user, authLoading, router, document]);
 
-  const fetchDocument = async () => {
+  const fetchDocument = async (isInitialLoad = false) => {
     try {
-      setLoading(true);
+      if (isInitialLoad) setLoading(true);
       const { data, error } = await supabase
         .from("documents")
         .select("*")
@@ -73,9 +73,9 @@ export default function DocumentPage() {
       setDocContent(data.content);
     } catch (error) {
       console.error("Error fetching document:", error);
-      router.push("/dashboard");
+      if (isInitialLoad) router.push("/dashboard");
     } finally {
-      setLoading(false);
+      if (isInitialLoad) setLoading(false);
     }
   };
 
@@ -252,27 +252,27 @@ function SavedToolsList({ docId, docContent }: { docId: string, docContent: stri
    const [loading, setLoading] = useState(true);
    const [viewingTool, setViewingTool] = useState<any | null>(null);
 
-   useEffect(() => {
-     fetchTools();
-   }, [docId]);
+    useEffect(() => {
+      fetchTools(true);
+    }, [docId]);
  
-   const fetchTools = async () => {
-     try {
-       setLoading(true);
-       const { data, error } = await supabase
-         .from("study_tools")
-         .select("*")
-         .eq("document_id", docId)
-         .order("created_at", { ascending: false });
- 
-       if (error) throw error;
-       setTools(data || []);
-     } catch (error) {
-       console.error("Error fetching tools:", error);
-     } finally {
-       setLoading(false);
-     }
-   };
+    const fetchTools = async (isInitialLoad = false) => {
+      try {
+        if (isInitialLoad) setLoading(true);
+        const { data, error } = await supabase
+          .from("study_tools")
+          .select("*")
+          .eq("document_id", docId)
+          .order("created_at", { ascending: false });
+  
+        if (error) throw error;
+        setTools(data || []);
+      } catch (error) {
+        console.error("Error fetching tools:", error);
+      } finally {
+        if (isInitialLoad) setLoading(false);
+      }
+    };
    
    // FIX: I need to render the specific tool component directly passing initialData
    if (viewingTool) {
