@@ -26,7 +26,7 @@ Content:
 ${content.substring(0, 4000)}
 
 For each FRQ, provide:
-1. The Question Prompt (scenario based or conceptual).
+1. The Question Prompt (scenario based or conceptual. start it with the frq dedicated terms from AP classes: define, explain, describe, identify, compare, etc.).
 2. A detailed Scoring Guideline (rubric) explaining how points are awarded.
 3. A Sample High-Quality Answer.
 
