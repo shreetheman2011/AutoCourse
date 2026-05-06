@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
-import { Folder, Plus, LogOut, FileText, Loader2 } from "lucide-react";
-import PDFUpload from "@/components/PDFUpload";
+import {
+  FilePlus2,
+  FileText,
+  Headphones,
+  Link2,
+  Loader2,
+  LogOut,
+  Mic,
+  Plus,
+  Upload,
+  Youtube,
+} from "lucide-react";
 
 interface Document {
   id: string;
@@ -15,11 +25,39 @@ interface Document {
   created_at: string;
 }
 
+type SourceMode = "blank" | "voice" | "pdf" | "link" | null;
+
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult:
+    | ((event: {
+        resultIndex: number;
+        results: ArrayLike<ArrayLike<{ transcript: string }>>;
+      }) => void)
+    | null;
+  onend: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showUpload, setShowUpload] = useState(false);
+  const [activeMode, setActiveMode] = useState<SourceMode>(null);
+  const [title, setTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [voiceText, setVoiceText] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,6 +70,11 @@ export default function DashboardPage() {
       fetchDocuments();
     }
   }, [user, authLoading, router]);
+
+  const firstName = useMemo(
+    () => user?.user_metadata?.first_name || user?.email?.split("@")[0] || "there",
+    [user]
+  );
 
   const fetchDocuments = async () => {
     try {
@@ -50,10 +93,191 @@ export default function DashboardPage() {
     }
   };
 
-  const handleUploadComplete = (doc: any) => {
-    fetchDocuments();
-    setShowUpload(false);
+  const resetComposer = () => {
+    setActiveMode(null);
+    setTitle("");
+    setLinkUrl("");
+    setVoiceText("");
+    setSelectedFile(null);
+    setErrorMessage("");
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+    }
+    setIsRecording(false);
   };
+
+  const createDocument = async (name: string, content: string) => {
+    if (!user) throw new Error("You must be signed in to create a document.");
+
+    const { data, error } = await supabase
+      .from("documents")
+      .insert({
+        user_id: user.id,
+        name,
+        content,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Document;
+  };
+
+  const createBlankDoc = async () => {
+    setIsCreating(true);
+    setErrorMessage("");
+    try {
+      const doc = await createDocument(
+        title.trim() || "Untitled document",
+        "<h1>Untitled document</h1><p><br></p>"
+      );
+      router.push(`/dashboard/${doc.id}`);
+    } catch (error: any) {
+      setErrorMessage(error.message || "Could not create document.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const createAiDoc = async (sourceType: "voice" | "pdf" | "url", content: string) => {
+    const response = await fetch("/api/create-notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceType,
+        content,
+        url: sourceType === "url" ? linkUrl : undefined,
+        title,
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not create notes.");
+
+    return createDocument(data.title || title || "Generated study notes", data.html);
+  };
+
+  const processPdf = async () => {
+    if (!selectedFile) throw new Error("Choose a PDF first.");
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    const response = await fetch("/api/upload-pdf", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not read PDF.");
+
+    return data.content as string;
+  };
+
+  const handleCreateFromSource = async () => {
+    setIsCreating(true);
+    setErrorMessage("");
+
+    try {
+      let doc: Document;
+
+      if (activeMode === "blank") {
+        await createBlankDoc();
+        return;
+      }
+
+      if (activeMode === "voice") {
+        if (!voiceText.trim()) throw new Error("Record or paste voice notes first.");
+        doc = await createAiDoc("voice", voiceText);
+      } else if (activeMode === "pdf") {
+        const pdfText = await processPdf();
+        doc = await createAiDoc("pdf", pdfText);
+      } else if (activeMode === "link") {
+        if (!linkUrl.trim()) throw new Error("Paste a website or YouTube link first.");
+        doc = await createAiDoc("url", "");
+      } else {
+        throw new Error("Choose how you want to start.");
+      }
+
+      router.push(`/dashboard/${doc.id}`);
+    } catch (error: any) {
+      setErrorMessage(error.message || "Could not create document.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognitionApi =
+      (window as typeof window & {
+        SpeechRecognition?: SpeechRecognitionConstructor;
+        webkitSpeechRecognition?: SpeechRecognitionConstructor;
+      }).SpeechRecognition ||
+      (window as typeof window & {
+        webkitSpeechRecognition?: SpeechRecognitionConstructor;
+      }).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionApi) {
+      setErrorMessage("Voice recording is not supported in this browser. Paste notes instead.");
+      return;
+    }
+
+    const recognition = new SpeechRecognitionApi();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        transcript += `${event.results[index][0].transcript} `;
+      }
+      setVoiceText((current) => `${current} ${transcript}`.replace(/\s+/g, " ").trim());
+    };
+    recognition.onerror = (event) => {
+      setErrorMessage(`Recording error: ${event.error}`);
+      setIsRecording(false);
+    };
+    recognition.onend = () => setIsRecording(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  const sourceOptions = [
+    {
+      id: "blank" as const,
+      title: "Start a blank doc",
+      description: "Open a clean editor and write from scratch.",
+      icon: FilePlus2,
+      accent: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    },
+    {
+      id: "voice" as const,
+      title: "Voice record notes",
+      description: "Record or paste spoken notes and let AI structure them.",
+      icon: Headphones,
+      accent: "text-blue-700 bg-blue-50 border-blue-200",
+    },
+    {
+      id: "pdf" as const,
+      title: "Upload PDF notes",
+      description: "Upload study material and convert it into a formatted doc.",
+      icon: Upload,
+      accent: "text-violet-700 bg-violet-50 border-violet-200",
+    },
+    {
+      id: "link" as const,
+      title: "Website or YouTube",
+      description: "Paste a webpage or video link and generate notes.",
+      icon: Youtube,
+      accent: "text-red-700 bg-red-50 border-red-200",
+    },
+  ];
 
   if (authLoading || (loading && !documents.length)) {
     return (
@@ -64,8 +288,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <header className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/dashboard">
@@ -73,7 +296,7 @@ export default function DashboardPage() {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-gray-600 font-medium hidden sm:block">
-              Welcome, {user?.user_metadata?.first_name || user?.email?.split('@')[0]}
+              {firstName}
             </span>
             <button
               onClick={signOut}
@@ -86,79 +309,175 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Folder className="text-primary-500" />
-            My PDFs
-          </h1>
-          <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-sm"
-          >
-            <Plus size={20} />
-            Upload New
-          </button>
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">What are you studying?</h1>
+          <p className="text-gray-500 mt-2">
+            Start from nothing, a recording, a PDF, or a link. Generated notes open as editable docs.
+          </p>
         </div>
 
-        {showUpload && (
-          <div className="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100 relative">
-             <button 
-                onClick={() => setShowUpload(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-             >
-                ✕
-             </button>
-             <h2 className="text-lg font-semibold mb-4">Upload a new PDF</h2>
-             <PDFUpload onUploaded={handleUploadComplete} />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+          {sourceOptions.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => {
+                setActiveMode(option.id);
+                setErrorMessage("");
+              }}
+              className={`text-left bg-white border rounded-lg p-5 shadow-sm hover:shadow-md transition-all ${
+                activeMode === option.id ? "border-primary-500 ring-2 ring-primary-100" : "border-gray-200"
+              }`}
+            >
+              <div
+                className={`w-12 h-12 rounded-lg border flex items-center justify-center mb-4 ${option.accent}`}
+              >
+                <option.icon size={24} />
+              </div>
+              <h2 className="font-semibold text-gray-900">{option.title}</h2>
+              <p className="text-sm text-gray-500 mt-2 leading-relaxed">{option.description}</p>
+            </button>
+          ))}
+        </div>
+
+        {activeMode && (
+          <section className="bg-white border border-gray-200 rounded-lg shadow-sm p-5 mb-10">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Create document</h2>
+                <p className="text-sm text-gray-500">
+                  {activeMode === "blank"
+                    ? "Blank documents open immediately without AI."
+                    : "AI will format the source into clean study notes before opening the editor."}
+                </p>
+              </div>
+              <button onClick={resetComposer} className="text-sm text-gray-500 hover:text-gray-800">
+                Cancel
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <label className="block">
+                <span className="block text-sm font-medium text-gray-700 mb-1">Title</span>
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Optional document title"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </label>
+
+              {activeMode === "link" && (
+                <label className="block">
+                  <span className="block text-sm font-medium text-gray-700 mb-1">
+                    Website or YouTube URL
+                  </span>
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                    <input
+                      value={linkUrl}
+                      onChange={(event) => setLinkUrl(event.target.value)}
+                      placeholder="https://..."
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </label>
+              )}
+
+              {activeMode === "pdf" && (
+                <label className="block">
+                  <span className="block text-sm font-medium text-gray-700 mb-1">PDF file</span>
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+                    className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 file:mr-3 file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:rounded-md"
+                  />
+                </label>
+              )}
+            </div>
+
+            {activeMode === "voice" && (
+              <div className="mt-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    onClick={toggleRecording}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                      isRecording
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-primary-600 text-white hover:bg-primary-700"
+                    }`}
+                  >
+                    <Mic size={18} />
+                    {isRecording ? "Stop recording" : "Record"}
+                  </button>
+                  <span className="text-sm text-gray-500">You can also paste notes below.</span>
+                </div>
+                <textarea
+                  value={voiceText}
+                  onChange={(event) => setVoiceText(event.target.value)}
+                  placeholder="Recorded or pasted notes appear here."
+                  className="w-full min-h-[160px] p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                {errorMessage}
+              </div>
+            )}
+
+            <div className="flex justify-end mt-5">
+              <button
+                onClick={handleCreateFromSource}
+                disabled={isCreating}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50"
+              >
+                {isCreating ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
+                {activeMode === "blank" ? "Create blank doc" : "Create notes doc"}
+              </button>
+            </div>
+          </section>
         )}
 
-        {documents.length === 0 && !showUpload ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText size={32} />
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Recent docs</h2>
+          </div>
+
+          {documents.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center">
+              <FileText size={40} className="text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-800">No docs yet</h3>
+              <p className="text-gray-500 mt-1">Choose one of the four options above to create your first doc.</p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              No PDFs yet
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Upload your study materials to start generating quizzes, flashcards,
-              and more.
-            </p>
-            <button
-              onClick={() => setShowUpload(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-            >
-              <Plus size={20} />
-              Upload your first PDF
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documents.map((doc) => (
-              <Link
-                key={doc.id}
-                href={`/dashboard/${doc.id}`}
-                className="group bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-primary-200 transition-all cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-blue-50 text-primary-600 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-colors">
-                    <FileText size={24} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {documents.map((doc) => (
+                <Link
+                  key={doc.id}
+                  href={`/dashboard/${doc.id}`}
+                  className="group bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-primary-200 transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-blue-50 text-primary-600 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-colors">
+                      <FileText size={22} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-800 truncate">{doc.name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-1 truncate">
-                  {doc.name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {new Date(doc.created_at).toLocaleDateString()}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
 }
+

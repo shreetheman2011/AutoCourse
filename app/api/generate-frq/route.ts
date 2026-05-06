@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getDifficultyInstruction } from "@/lib/difficulty";
 
 const openai = new OpenAI({
   apiKey: process.env.CHATGPT_SECRET_KEY || "",
@@ -8,6 +9,7 @@ const openai = new OpenAI({
 export async function POST(req: NextRequest) {
   try {
     const { content, count, difficulty, topics } = await req.json();
+    const difficultyInstruction = getDifficultyInstruction(difficulty);
 
     if (!process.env.CHATGPT_SECRET_KEY) {
       return NextResponse.json(
@@ -22,11 +24,14 @@ Based on the following study content${
       topics ? ` focusing on: ${topics}` : ""
     }, generate ${count} FRQ (Free Response Question) prompts with a ${difficulty} difficulty level.
 
+Difficulty direction:
+${difficultyInstruction}
+
 Content:
 ${content.substring(0, 4000)}
 
 For each FRQ, provide:
-1. The Question Prompt (scenario based or conceptual. start it with the frq dedicated terms from AP classes: define, explain, describe, identify, compare, etc.).
+1. The Question Prompt (scenario based or conceptual. Start it with AP task verbs such as define, explain, describe, identify, compare, evaluate, justify, analyze, or predict.).
 2. A detailed Scoring Guideline (rubric) explaining how points are awarded.
 3. A Sample High-Quality Answer.
 
@@ -44,7 +49,7 @@ Generate the output in the following JSON format:
   ]
 }
 
-Ensure the questions encourage critical thinking and deep understanding.
+Ensure the questions encourage critical thinking and deep understanding. If difficulty is extreme, make the FRQs exceptionally demanding with layered stimulus interpretation, task-verb precision, and AP-level scoring nuance.
 Return ONLY valid JSON.`;
 
     const completion = await openai.chat.completions.create({

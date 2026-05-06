@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getDifficultyInstruction } from "@/lib/difficulty";
 
 const openai = new OpenAI({
   apiKey: process.env.CHATGPT_SECRET_KEY || "",
@@ -10,6 +11,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const { content, count, difficulty, topics } = await req.json();
+    const difficultyInstruction = getDifficultyInstruction(difficulty);
 
     if (!process.env.CHATGPT_SECRET_KEY) {
       return NextResponse.json(
@@ -23,6 +25,9 @@ export async function POST(req: NextRequest) {
 Based on the following study content${
       topics ? ` focusing on: ${topics}` : ""
     }, generate ${count} multiple-choice quiz questions with ${difficulty} difficulty level.
+
+Difficulty direction:
+${difficultyInstruction}
 
 Content:
 ${content?.substring(0, 3000) ?? ""}
@@ -68,4 +73,3 @@ Make sure:
     );
   }
 }
-

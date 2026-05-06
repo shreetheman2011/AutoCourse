@@ -10,12 +10,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: #f8fafc;
 }
 
 @layer utilities {
@@ -40,4 +35,130 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+.prose-editor h1 {
+  font-size: 2rem;
+  line-height: 2.35rem;
+  font-weight: 750;
+  margin: 0 0 1rem;
+}
+
+.prose-editor h2 {
+  font-size: 1.35rem;
+  line-height: 1.85rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.65rem;
+}
+
+.prose-editor h3 {
+  font-size: 1.1rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  margin: 1.1rem 0 0.5rem;
+}
+
+.prose-editor p {
+  margin: 0.6rem 0;
+}
+
+.prose-editor ul,
+.prose-editor ol {
+  margin: 0.75rem 0 0.75rem 1.4rem;
+}
+
+.prose-editor ul {
+  list-style: disc;
+}
+
+.prose-editor ol {
+  list-style: decimal;
+}
+
+.prose-editor li {
+  margin: 0.3rem 0;
+}
+
+.prose-editor blockquote {
+  border-left: 4px solid #2563eb;
+  background: #eff6ff;
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0.4rem;
+}
+
+.prose-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.prose-editor th,
+.prose-editor td {
+  border: 1px solid #d1d5db;
+  padding: 0.6rem;
+  vertical-align: top;
+}
+
+.prose-editor th {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+
+.prose-editor hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+.toolbar-tooltip {
+  position: relative;
+}
+
+.toolbar-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  z-index: 50;
+  transform: translateX(-50%) translateY(-2px);
+  white-space: nowrap;
+  border-radius: 0.375rem;
+  background: #111827;
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding: 0.35rem 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.toolbar-tooltip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 3px);
+  z-index: 50;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid #111827;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.toolbar-tooltip:hover::after,
+.toolbar-tooltip:focus-visible::after,
+.toolbar-tooltip:hover::before,
+.toolbar-tooltip:focus-visible::before {
+  opacity: 1;
+}
+
+.toolbar-tooltip:hover::after,
+.toolbar-tooltip:focus-visible::after {
+  transform: translateX(-50%) translateY(0);
 }

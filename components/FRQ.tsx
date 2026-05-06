@@ -196,7 +196,11 @@ export default function FRQ({ uploadedContent, docId, initialData, onGenerate, t
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
                     <option value="hard">Hard</option>
+                    <option value="extreme">Extreme</option>
                  </select>
+                 <p className="mt-1 text-xs text-gray-500">
+                    Extreme is built for unusually hard AP-level prompts.
+                 </p>
               </div>
               <div>
                  <label className="block text-sm font-medium text-gray-700 mb-1">Count</label>
