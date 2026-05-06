@@ -24,11 +24,10 @@ export default function Logo({ size = "large" }: { size?: "small" | "large" }) {
             />
          </div>
       </div>
-      <h1 className={`${textSize} font-bold text-gray-900 tracking-tight flex items-center`}>
+      <h1 className={`${textSize} font-bold text-gray-900 tracking-tight flex items-center dark:text-white`}>
         <span className="text-blue-600">Auto</span>
-        <span className="text-gray-800">Course</span>
+        <span className="text-gray-800 dark:text-gray-100">Course</span>
       </h1>
     </div>
   );
 }
-

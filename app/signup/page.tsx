@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
@@ -64,8 +65,11 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="fixed right-4 top-12">
+        <DarkModeToggle />
+      </div>
+      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg dark:bg-gray-900 dark:shadow-none">
         <div className="flex justify-center mb-6">
           <Logo size="large" />
         </div>

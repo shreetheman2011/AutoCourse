@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
+import { extractPdfTextInBrowser } from "@/lib/clientPdf";
 
 interface PDFUploadProps {
   onUploaded: (doc: any) => void;
@@ -64,24 +65,9 @@ export default function PDFUpload({ onUploaded }: PDFUploadProps) {
     setUploadStatus("idle");
     setErrorMessage("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      // 1. Upload to API to parse text
-      const response = await fetch("/api/upload-pdf", {
-        method: "POST",
-        body: formData,
-      });
+      const parsedData = await extractPdfTextInBrowser(file);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to parse PDF");
-      }
-
-      const parsedData = await response.json();
-
-      // 2. Save text content to Supabase
       const { data, error } = await supabase
         .from("documents")
         .insert({
@@ -217,4 +203,3 @@ export default function PDFUpload({ onUploaded }: PDFUploadProps) {
     </div>
   );
 }
-

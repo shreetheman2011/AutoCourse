@@ -37,6 +37,7 @@ import {
   X,
 } from "lucide-react";
 import Logo from "@/components/Logo";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import StudyTools from "@/components/StudyTools";
 import FRQ from "@/components/FRQ";
 import Quiz from "@/components/Quiz";
@@ -441,13 +442,13 @@ export default function DocumentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      <header className="bg-white border-b sticky top-0 z-20">
+    <div className="min-h-screen bg-slate-100 flex flex-col dark:bg-gray-950">
+      <header className="bg-white border-b sticky top-0 z-20 dark:border-gray-800 dark:bg-gray-900">
         <div className="px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/dashboard"
-              className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary-300"
               title="Back"
             >
               <ArrowLeft size={20} />
@@ -456,7 +457,7 @@ export default function DocumentPage() {
             <input
               value={docTitle}
               onChange={(event) => handleTitleChange(event.target.value)}
-              className="min-w-0 w-[260px] sm:w-[360px] px-2 py-1 font-semibold text-gray-900 border border-transparent rounded-md hover:border-gray-200 focus:border-primary-300 focus:outline-none"
+              className="min-w-0 w-[260px] sm:w-[360px] px-2 py-1 font-semibold text-gray-900 border border-transparent rounded-md hover:border-gray-200 focus:border-primary-300 focus:outline-none dark:bg-transparent dark:text-white dark:hover:border-gray-700"
             />
           </div>
 
@@ -472,7 +473,7 @@ export default function DocumentPage() {
             </span>
             <button
               onClick={() => setShowVersions(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium"
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <History size={17} />
               <span className="hidden sm:inline">History</span>
@@ -480,7 +481,7 @@ export default function DocumentPage() {
             <button
               onClick={() => void saveDocument()}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               {saving ? <Loader2 className="animate-spin" size={17} /> : <Save size={17} />}
               <span className="hidden sm:inline">Save</span>
@@ -492,9 +493,10 @@ export default function DocumentPage() {
               <Share2 size={17} />
               Share
             </button>
+            <DarkModeToggle />
             <button
               onClick={signOut}
-              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors dark:text-gray-300 dark:hover:bg-red-950/40 dark:hover:text-red-300"
               title="Sign Out"
             >
               <LogOut size={20} />
@@ -502,7 +504,7 @@ export default function DocumentPage() {
           </div>
         </div>
 
-        <div className="px-4 h-12 flex items-center gap-1 border-t overflow-x-auto">
+        <div className="px-4 h-12 flex items-center gap-1 border-t overflow-x-auto dark:border-gray-800">
           <ToolbarButton title="Undo" onClick={undoSnapshot} icon={<Undo2 size={16} />} disabled={historyStack.length <= 1} {...toolbarTooltipHandlers} />
           <ToolbarButton title="Redo" onClick={redoSnapshot} icon={<Redo2 size={16} />} disabled={redoStack.length === 0} {...toolbarTooltipHandlers} />
           <div className="h-6 w-px bg-gray-200 mx-1" />
@@ -583,18 +585,18 @@ export default function DocumentPage() {
 
       <main className="flex-1 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] gap-4 p-4 overflow-hidden">
         <section className="min-h-[calc(100vh-128px)] overflow-auto">
-          <div className="bg-white border border-gray-200 shadow-sm mx-auto max-w-[900px] min-h-[calc(100vh-160px)] p-8 sm:p-12 rounded-lg">
+          <div className="bg-white border border-gray-200 shadow-sm mx-auto max-w-[900px] min-h-[calc(100vh-160px)] p-8 sm:p-12 rounded-lg dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
             <div
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              className="prose-editor min-h-[calc(100vh-260px)] outline-none text-gray-900 leading-7"
+              className="prose-editor min-h-[calc(100vh-260px)] outline-none text-gray-900 leading-7 dark:text-gray-100"
               onInput={handleEditorInput}
             />
           </div>
         </section>
 
-        <aside className="bg-white border border-gray-200 rounded-lg shadow-sm min-h-[520px] xl:max-h-[calc(100vh-144px)] overflow-hidden flex flex-col">
+        <aside className="bg-white border border-gray-200 rounded-lg shadow-sm min-h-[520px] xl:max-h-[calc(100vh-144px)] overflow-hidden flex flex-col dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
           <div className="flex bg-gray-100 p-1 m-3 rounded-lg">
             <PanelTab active={rightPanel === "tools"} onClick={() => setRightPanel("tools")} icon={<BookOpen size={15} />} label="Tools" />
             <PanelTab active={rightPanel === "frq"} onClick={() => setRightPanel("frq")} icon={<FileText size={15} />} label="FRQ" />
@@ -684,7 +686,7 @@ function ToolbarButton({
       onBlur={() => onTooltipChange?.(null)}
       onClick={onClick}
       disabled={disabled}
-      className="w-9 h-9 inline-flex items-center justify-center rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="w-9 h-9 inline-flex items-center justify-center rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
     >
       {icon}
     </button>
@@ -736,7 +738,7 @@ function ToolbarSelect({
         }}
         onBlur={() => onTooltipChange?.(null)}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 max-w-[132px] rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-200"
+        className="h-9 max-w-[132px] rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -777,7 +779,7 @@ function ColorControl({
 
   return (
     <label
-      className="h-9 w-11 inline-flex items-center justify-center rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer relative"
+      className="h-9 w-11 inline-flex items-center justify-center rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer relative dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
       onMouseEnter={showTooltip}
       onMouseLeave={() => onTooltipChange?.(null)}
     >
@@ -851,7 +853,7 @@ function PanelTab({
     <button
       onClick={onClick}
       className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition ${
-        active ? "bg-white text-primary-700 shadow-sm" : "text-gray-500 hover:text-gray-800"
+        active ? "bg-white text-primary-700 shadow-sm dark:bg-gray-800 dark:text-primary-300" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
       }`}
     >
       {icon}
@@ -1103,21 +1105,21 @@ function ShareDialog({
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-5 py-4 border-b flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col dark:bg-gray-900">
+        <div className="px-5 py-4 border-b flex items-center justify-between dark:border-gray-800">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Share document</h2>
-            <p className="text-sm text-gray-500">Add people or groups, then choose access.</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Share document</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Add people or groups, then choose access.</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-800">
             <X size={18} />
           </button>
         </div>
 
         <div className="p-5 space-y-6 overflow-auto">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">People and groups</label>
-            <div className="border border-gray-300 rounded-lg px-2 py-2 min-h-[46px] flex flex-wrap gap-2 relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">People and groups</label>
+            <div className="border border-gray-300 rounded-lg px-2 py-2 min-h-[46px] flex flex-wrap gap-2 relative dark:border-gray-700 dark:bg-gray-950">
               {targets.map((target) => (
                 <Badge
                   key={`${target.type}-${target.id}`}
@@ -1134,20 +1136,20 @@ function ShareDialog({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={targets.length ? "" : "Type a name, email, or group"}
-                className="flex-1 min-w-[220px] outline-none px-2 py-1"
+                className="flex-1 min-w-[220px] outline-none px-2 py-1 dark:bg-transparent dark:text-white dark:placeholder:text-gray-500"
               />
               {suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden">
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden dark:border-gray-700 dark:bg-gray-900">
                   {suggestions.map((suggestion) => (
                     <button
                       key={`${suggestion.type}-${suggestion.id}`}
                       onClick={() => addTarget(suggestion)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between dark:hover:bg-gray-800"
                     >
                       <span>
-                        <span className="font-medium text-gray-900">{suggestion.label}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{suggestion.label}</span>
                         {suggestion.sublabel && (
-                          <span className="block text-xs text-gray-500">{suggestion.sublabel}</span>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">{suggestion.sublabel}</span>
                         )}
                       </span>
                       {suggestion.type === "group" ? <Users size={16} /> : <Eye size={16} />}
@@ -1160,13 +1162,13 @@ function ShareDialog({
               <select
                 value={access}
                 onChange={(event) => setAccess(event.target.value as AccessLevel)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white"
               >
                 <option value="view">View</option>
                 <option value="comment">Comment</option>
                 <option value="edit">Edit</option>
               </select>
-              <label className="inline-flex items-center gap-2 text-sm text-gray-700 select-none">
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700 select-none dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={notifyPeople}
@@ -1185,13 +1187,13 @@ function ShareDialog({
           </div>
 
           <div className="border-t pt-5">
-            <h3 className="font-semibold text-gray-900 mb-3">Create a group</h3>
+            <h3 className="font-semibold text-gray-900 mb-3 dark:text-white">Create a group</h3>
             <div className="grid sm:grid-cols-[1fr_auto] gap-2 mb-3">
               <input
                 value={groupName}
                 onChange={(event) => setGroupName(event.target.value)}
                 placeholder="Group name"
-                className="border border-gray-300 rounded-lg px-3 py-2"
+                className="border border-gray-300 rounded-lg px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500"
               />
               <button
                 onClick={createGroup}
@@ -1212,7 +1214,7 @@ function ShareDialog({
                 />
               ))}
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Search a person above, then select them before creating a group.
             </p>
             {suggestions.some((item) => item.type === "user") && (
@@ -1234,12 +1236,12 @@ function ShareDialog({
           </div>
 
           <div className="border-t pt-5">
-            <h3 className="font-semibold text-gray-900 mb-3">Public link</h3>
+            <h3 className="font-semibold text-gray-900 mb-3 dark:text-white">Public link</h3>
             <div className="flex flex-col sm:flex-row gap-2">
               <select
                 value={publicAccess}
                 onChange={(event) => setPublicAccess(event.target.value as AccessLevel)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white"
               >
                 <option value="view">Anyone can view</option>
                 <option value="comment">Anyone can comment</option>
@@ -1247,20 +1249,20 @@ function ShareDialog({
               </select>
               <button
                 onClick={createPublicLink}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-50"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <LinkIcon size={16} />
                 {publicToken ? "Update link" : "Create link"}
               </button>
             </div>
             {publicHref && (
-              <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 break-all">
+              <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 break-all dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300">
                 {publicHref}
               </div>
             )}
           </div>
 
-          {status && <div className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-3">{status}</div>}
+          {status && <div className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-3 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300">{status}</div>}
         </div>
       </div>
     </div>
@@ -1326,13 +1328,13 @@ function VersionHistoryDialog({
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="px-5 py-4 border-b flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col dark:bg-gray-900">
+        <div className="px-5 py-4 border-b flex items-center justify-between dark:border-gray-800">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Version history</h2>
-            <p className="text-sm text-gray-500">Restore an earlier saved version.</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Version history</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Restore an earlier saved version.</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-800">
             <X size={18} />
           </button>
         </div>
@@ -1340,7 +1342,7 @@ function VersionHistoryDialog({
           {loading && <Loader2 className="animate-spin text-primary-600 mx-auto my-10" />}
           {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
           {!loading && !error && versions.length === 0 && (
-            <div className="text-center text-gray-500 py-10">
+            <div className="text-center text-gray-500 py-10 dark:text-gray-400">
               <Clock size={34} className="mx-auto mb-2 text-gray-300" />
               No saved versions yet.
             </div>
@@ -1350,10 +1352,10 @@ function VersionHistoryDialog({
               <button
                 key={version.id}
                 onClick={() => onRestore(version)}
-                className="w-full text-left p-3 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50"
+                className="w-full text-left p-3 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 dark:border-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
               >
-                <div className="font-medium text-gray-900">{version.title}</div>
-                <div className="text-xs text-gray-500">{new Date(version.created_at).toLocaleString()}</div>
+                <div className="font-medium text-gray-900 dark:text-white">{version.title}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(version.created_at).toLocaleString()}</div>
               </button>
             ))}
           </div>
@@ -1395,15 +1397,15 @@ function SavedToolsList({ docId, docContent }: { docId: string; docContent: stri
       <div className="space-y-4">
         <button
           onClick={() => setViewingTool(null)}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-800"
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
         >
           <ArrowLeft size={16} /> Back
         </button>
 
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="mb-4 pb-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800">{viewingTool.title}</h2>
-            <p className="text-sm text-gray-500">
+        <div className="border border-gray-200 rounded-lg p-4 dark:border-gray-800">
+          <div className="mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">{viewingTool.title}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Created on {new Date(viewingTool.created_at).toLocaleDateString()}
             </p>
           </div>
@@ -1456,7 +1458,7 @@ function SavedToolsList({ docId, docContent }: { docId: string; docContent: stri
   return (
     <div>
       {tools.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Folder size={44} className="mx-auto mb-4 text-gray-300" />
           <p>No saved tools yet.</p>
         </div>
@@ -1466,7 +1468,7 @@ function SavedToolsList({ docId, docContent }: { docId: string; docContent: stri
             <button
               key={tool.id}
               onClick={() => setViewingTool(tool)}
-              className="bg-white p-4 rounded-lg border border-gray-200 hover:border-primary-300 cursor-pointer transition-all flex items-center justify-between group text-left"
+              className="bg-white p-4 rounded-lg border border-gray-200 hover:border-primary-300 cursor-pointer transition-all flex items-center justify-between group text-left dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-700"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
@@ -1477,10 +1479,10 @@ function SavedToolsList({ docId, docContent }: { docId: string; docContent: stri
                   {tool.type === "frq" ? <FileText size={20} /> : <BookOpen size={20} />}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-800 truncate group-hover:text-primary-600">
+                  <h3 className="font-semibold text-gray-800 truncate group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-300">
                     {tool.title}
                   </h3>
-                  <p className="text-xs text-gray-500 capitalize">
+                  <p className="text-xs text-gray-500 capitalize dark:text-gray-400">
                     {tool.type} • {new Date(tool.created_at).toLocaleDateString()}
                   </p>
                 </div>

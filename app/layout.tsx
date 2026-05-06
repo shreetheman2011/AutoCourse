@@ -19,6 +19,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var saved = localStorage.getItem('autocourse-theme');
+                var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.toggle('dark', dark);
+              } catch (e) {}
+            `,
+          }}
+        />
         <AuthProvider>
           {/* Contact Banner */}
           <div className="bg-primary-600 text-white text-center py-2 text-sm font-medium z-50">

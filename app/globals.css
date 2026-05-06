@@ -13,6 +13,11 @@ body {
   background: #f8fafc;
 }
 
+.dark body {
+  color: #e5e7eb;
+  background: #030712;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -35,6 +40,48 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+.dark .bg-white {
+  background-color: #111827;
+}
+
+.dark .bg-gray-50 {
+  background-color: #030712;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1f2937;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: #374151;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: #f9fafb;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #9ca3af;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #030712;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280;
 }
 
 .prose-editor h1 {
@@ -87,6 +134,11 @@ body {
   border-radius: 0.4rem;
 }
 
+.dark .prose-editor blockquote {
+  border-left-color: #60a5fa;
+  background: #172554;
+}
+
 .prose-editor table {
   width: 100%;
   border-collapse: collapse;
@@ -104,6 +156,15 @@ body {
 .prose-editor th {
   background: #f3f4f6;
   font-weight: 700;
+}
+
+.dark .prose-editor th {
+  background: #1f2937;
+}
+
+.dark .prose-editor th,
+.dark .prose-editor td {
+  border-color: #4b5563;
 }
 
 .prose-editor hr {

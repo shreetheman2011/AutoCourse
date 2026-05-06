@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import Logo from "@/components/Logo";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import Link from "next/link";
 
 export default function Home() {
@@ -18,14 +19,17 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-center p-4 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="fixed right-4 top-12">
+        <DarkModeToggle />
+      </div>
       <div className="text-center max-w-3xl mx-auto">
         <div className="flex justify-center mb-8">
           <Logo size="large" />
@@ -33,7 +37,7 @@ export default function Home() {
         <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-purple-600 mb-6">
           Your Intelligent Study Companion
         </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto dark:text-gray-300">
           Upload your study guides and instantly generate quizzes, flashcards,
           matching games, and free response questions. Chat with AI to master
           your material.
